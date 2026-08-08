@@ -5,8 +5,8 @@ Orchestrates the Dataform repository (staging tables + incremental
 `fact_order_items`) defined under `definitions/` using the real
 `apache-airflow-providers-google` Dataform operators, on a daily schedule.
 
-Design notes / honesty disclaimer
-----------------------------------
+Status
+------
 This DAG is written against the documented API of
 `apache-airflow-providers-google>=10.9.0` and is syntax-consistent with it,
 but it has **not** been executed against a live Cloud Composer environment.

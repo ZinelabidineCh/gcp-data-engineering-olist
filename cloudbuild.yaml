@@ -12,13 +12,12 @@
 #      staging tables + incremental fact_order_items build in BigQuery,
 #      assertions included.
 #
-# Honesty note: this file is written to be correct against the
-# `gcloud dataform` command surface and has not been run through a real
-# Cloud Build trigger yet (no live trigger/connection provisioned for
-# this portfolio project — see the bootstrap note in terraform/cicd.tf).
-# Stage 1 (`dataform compile`) *has* been run locally against this
-# repo's actual definitions/ and passes:
-#   9 actions compiled (4 datasets, 5 assertions), 0 errors.
+# Status: this file is written to be correct against the `gcloud dataform`
+# command surface but has not been run through a real Cloud Build trigger
+# yet (no live trigger/connection provisioned for this portfolio project —
+# see the bootstrap note in terraform/cicd.tf). Stage 1 (`dataform compile`)
+# *has* been run locally against this repo's actual definitions/ and
+# passes: 9 actions compiled (4 datasets, 5 assertions), 0 errors.
 
 steps:
   # --- Stage 1: validate --------------------------------------------------

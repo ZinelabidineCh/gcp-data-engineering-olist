@@ -69,7 +69,7 @@ Using Dataform allowed me to treat data transformations like software code (Vers
 
 ## 🧭 Extension: Orchestration, IaC & CI/CD
 
-Beyond the Dataform pipeline itself, this repo includes a **design layer** for how it would be operated as a real freelance-delivered platform: scheduled orchestration, infrastructure as code, and a validating deploy pipeline. I'm building this in the open specifically because it's the part junior GCP roles rarely touch — being explicit about what's proven vs. designed is more useful to a prospective client than pretending everything runs in a production cluster I'm not paying for.
+Beyond the Dataform pipeline itself, this repo includes a **design layer** for how it would be operated as a real freelance-delivered platform: scheduled orchestration, infrastructure as code, and a validating deploy pipeline. This layer is built and documented in the open specifically because orchestration and IaC are the parts junior GCP roles rarely get hands-on with — being explicit about what's proven vs. designed is more useful to a prospective client than presenting an unrun production setup as if it were live.
 
 ### 🗓️ Orchestration — Airflow ([`orchestration/`](./orchestration/))
 [`dataform_orchestration_dag.py`](./orchestration/dataform_orchestration_dag.py) orchestrates the Dataform repository on a daily schedule using the real `apache-airflow-providers-google` Dataform operators (`DataformCreateCompilationResultOperator`, `DataformCreateWorkflowInvocationOperator`, `DataformWorkflowInvocationStateSensor`) — the same operators you'd use against a live Cloud Composer environment.

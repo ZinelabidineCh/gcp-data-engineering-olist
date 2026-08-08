@@ -12,7 +12,7 @@ Provisions the GCP infrastructure this pipeline runs on:
 
 ## Status: written, not applied
 
-This configuration is hand-written against the documented `hashicorp/google` provider (`~> 5.30`) resource schemas. **It has not been run through `terraform init/plan/apply`** — there's no `terraform` binary in the environment this was authored in, and applying it against a real project is a deliberate, billed action I'm not taking on your behalf without you running it yourself. Treat this as an IaC design you review and apply, not as infrastructure that already exists.
+This configuration is hand-written against the documented `hashicorp/google` provider (`~> 5.30`) resource schemas. **It has not been run through `terraform init/plan/apply`** — no `terraform` binary was available in the authoring environment, and applying it against a real project incurs real GCP costs and is left as a deliberate manual step. Treat this as an IaC design to review and apply, not as infrastructure that already exists.
 
 Two things need to happen once, manually, before `apply` will fully succeed:
 1. Create the `dataform-github-pat` secret in Secret Manager (a GitHub PAT with `repo` scope) — kept out of Terraform state on purpose.
