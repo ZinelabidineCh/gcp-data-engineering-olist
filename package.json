@@ -1,0 +1,12 @@
+{
+    "name": "olist-analytics-pipeline",
+    "dependencies": {
+        "@dataform/core": "3.0.0"
+    },
+    "devDependencies": {
+        "@dataform/cli": "3.0.0"
+    },
+    "scripts": {
+        "compile": "dataform compile"
+    }
+}

@@ -1,0 +1,21 @@
+config {
+    type: "table",
+    description: "Casting prices and shipping limit dates for order items",
+    assertions: {
+        rowConditions: [
+            "price >= 0",
+            "freight_value >= 0"
+        ]
+    }
+}
+
+SELECT
+  order_id,
+  order_item_id,
+  product_id,
+  seller_id,
+  CAST(shipping_limit_date AS TIMESTAMP) as shipping_limit_at,
+  CAST(price AS FLOAT64) as price,
+  CAST(freight_value AS FLOAT64) as freight_value
+FROM ${ref("items_raw")}
+QUALIFY ROW_NUMBER() OVER(PARTITION BY order_id, order_item_id ORDER BY shipping_limit_at DESC) = 1

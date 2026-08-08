@@ -1,0 +1,37 @@
+config {
+    type: "incremental",
+    uniqueKey: ["order_item_id"], //added
+    description: "Final fact table joining items, orders, and products. Optimized with partitioning and clustering.",
+    bigquery: {
+        partitionBy: "DATE(purchase_at)",
+        clusterBy: ["product_category_name", "order_status"]
+    },
+    columns: {
+        total_order_item_value: "Total value of the item including price and freight"
+    },
+    assertions: {
+        nonNull: ["order_id", "product_id", "purchase_at"],
+        rowConditions: [
+            "total_order_item_value >= 0" // Sécurité métier : une commande ne peut pas avoir une valeur négative
+        ]
+    }
+}
+
+SELECT
+  i.order_item_id,
+  i.order_id,
+  i.product_id,
+  o.purchase_at,
+  o.order_status,
+  p.product_category_name,
+  i.price,
+  i.freight_value,
+  (i.price + i.freight_value) as total_order_item_value
+FROM
+  ${ref("stg_items")} AS i
+LEFT JOIN
+  ${ref("stg_orders")} AS o ON i.order_id = o.order_id
+LEFT JOIN
+  ${ref("stg_products")} AS p ON i.product_id = p.product_id
+
+${when(incremental(), `WHERE o.purchase_at > TIMESTAMP_SUB((SELECT MAX(purchase_at) FROM ${self()}), INTERVAL 3 DAY)`)}
