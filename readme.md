@@ -21,14 +21,36 @@ This project is the culmination of a 3-part series demonstrating my growth from 
 ---
 
 ## 🏗️ Architecture & Tech Stack
-Unlike previous phases, this architecture moves away from manual execution to a **Modern Data Stack (MDS)** approach.
+Unlike previous phases, this architecture moves away from manual execution to a **Modern Data Stack (MDS)** approach: ingestion, transformation, orchestration and deployment are all defined as code.
 
-![Project Architecture](./images/Arborescence_projet_gcp.drawio.png)
+```mermaid
+flowchart LR
+    CSV(["Olist CSV extracts"]) --> GCS[["GCS bucket<br/>raw extracts"]]
+    GCS --> RAW[("BigQuery<br/>olist_raw_data")]
+    RAW --> DF["Dataform (SQLX)<br/>staging + fact_order_items"]
+    DF --> ANALYTICS[("BigQuery<br/>olist_analytics")]
+    ANALYTICS --> LOOKER["Looker Studio"]
 
+    AF["Airflow / Cloud Composer<br/>daily orchestration"] -. triggers .-> DF
+    CB["Cloud Build<br/>validate + deploy"] -. validates, then runs .-> DF
+    TF["Terraform<br/>IaC"] -. provisions .-> GCS
+    TF -. provisions .-> RAW
+    TF -. provisions .-> ANALYTICS
+    TF -. provisions .-> DF
+
+    classDef live fill:#34a853,stroke:#1e7e34,color:#fff
+    classDef design fill:#9aa0a6,stroke:#5f6368,color:#fff,stroke-dasharray: 4 3
+    class CSV,GCS,RAW,DF,ANALYTICS,LOOKER live
+    class AF,TF,CB design
+```
+*Solid arrows = the running ELT path. Dashed arrows = the orchestration/IaC/CI-CD layer described in [Extension: Orchestration, IaC & CI/CD](#-extension-orchestration-iac--cicd) below — grey nodes are designed, not yet running against live infra (see that section for what's actually been tested).*
 
 * **Ingestion:** Raw CSV data stored in **Google Cloud Storage (GCS)**.
 * **Storage:** **Google BigQuery** (Multi-tier: `olist_raw_data` for staging and `olist_analytics` for production).
 * **Transformation:** **Dataform (SQLX)** for modular ELT and dependency management.
+* **Orchestration:** **Airflow / Cloud Composer** DAG scheduling the Dataform runs *(design)*.
+* **Infrastructure as Code:** **Terraform** provisioning the GCS bucket, BigQuery datasets, Dataform repository and IAM *(design)*.
+* **CI/CD:** **Cloud Build** validating SQLX compilation and deploying on push *(validate stage tested, deploy stage design)*.
 * **Optimization:** Advanced Table Partitioning and Clustering for performance.
 * **Visualization:** **Looker Studio** for real-time cloud-native reporting.
 
