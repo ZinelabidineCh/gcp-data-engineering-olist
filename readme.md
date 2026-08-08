@@ -3,6 +3,9 @@
 [![GCP](https://img.shields.io/badge/Google_Cloud-Platform-blue?logo=google-cloud)](https://cloud.google.com/)
 [![BigQuery](https://img.shields.io/badge/BigQuery-Data_Warehouse-green)](https://cloud.google.com/bigquery)
 [![Dataform](https://img.shields.io/badge/Dataform-ELT_Modeling-orange)](https://cloud.google.com/dataform)
+[![Airflow](https://img.shields.io/badge/Airflow-Orchestration_(design)-lightgrey?logo=apacheairflow)](https://airflow.apache.org/)
+[![Terraform](https://img.shields.io/badge/Terraform-IaC_(design)-844FBA?logo=terraform)](https://www.terraform.io/)
+[![Cloud Build](https://img.shields.io/badge/Cloud_Build-CI%2FCD_(design)-blue?logo=googlecloud)](https://cloud.google.com/build)
 
 > **The final phase of the Olist Trilogy: A production-ready Cloud infrastructure focused on scalability, automation, and cost-efficiency.**
 
@@ -39,6 +42,26 @@ Using Dataform allowed me to treat data transformations like software code (Vers
 3.  **Analytics Layer:** Joined multiple sources into a centralized, high-performance `fact_order_items` table.
 
 ![Dataform Compiled Graph](./images/dataform-compiled-graph.png)
+
+---
+
+## 🧭 Extension: Orchestration, IaC & CI/CD
+
+Beyond the Dataform pipeline itself, this repo includes a **design layer** for how it would be operated as a real freelance-delivered platform: scheduled orchestration, infrastructure as code, and a validating deploy pipeline. I'm building this in the open specifically because it's the part junior GCP roles rarely touch — being explicit about what's proven vs. designed is more useful to a prospective client than pretending everything runs in a production cluster I'm not paying for.
+
+### 🗓️ Orchestration — Airflow ([`orchestration/`](./orchestration/))
+[`dataform_orchestration_dag.py`](./orchestration/dataform_orchestration_dag.py) orchestrates the Dataform repository on a daily schedule using the real `apache-airflow-providers-google` Dataform operators (`DataformCreateCompilationResultOperator`, `DataformCreateWorkflowInvocationOperator`, `DataformWorkflowInvocationStateSensor`) — the same operators you'd use against a live Cloud Composer environment.
+* **Status: syntax-consistent with the provider's documented API, not executed against a real Composer environment.** There's no Composer environment provisioned for this portfolio project (cost). Presented as a design reference, not as something running in production.
+
+### 🏗️ Infrastructure as Code — Terraform ([`terraform/`](./terraform/))
+Provisions the pipeline's GCP footprint declaratively: the raw-data GCS bucket, the two BigQuery datasets (`olist_raw_data`, `olist_analytics`), the managed Dataform repository (linked to this GitHub repo), and IAM — two purpose-built service accounts (Airflow, Cloud Build) scoped to the Dataform repository only, plus dataset-level (not project-level) BigQuery access for the Dataform Service Agent.
+* **Status: written against the `hashicorp/google` provider schema, not `terraform apply`-ed.** No `terraform` binary was available in the authoring environment to run `init/plan/apply`, and applying against a real project is a billed action left for you (or me, with your go-ahead) to run deliberately. See [`terraform/README.md`](./terraform/README.md) for the two manual bootstrap steps (GitHub PAT secret, Cloud Build GitHub App install) IaC can't fully automate on its own.
+
+### 🔁 CI/CD — Cloud Build ([`cloudbuild.yaml`](./cloudbuild.yaml))
+A two-stage pipeline triggered on push to the default branch:
+1. **Validate** — installs `@dataform/cli` and runs `dataform compile` against `definitions/`, failing fast on a bad `ref()` or config block, before anything touches BigQuery.
+2. **Deploy & run** — asks the managed Dataform repository to compile the pushed commit and creates a workflow invocation, i.e. actually executes the staging tables + incremental `fact_order_items` build, assertions included.
+* **Status: the validate stage has actually been run** locally against this repo's real `definitions/` (`dataform compile` → 9 actions compiled, 4 datasets, 5 assertions, 0 errors). **The deploy stage and the trigger itself are untested** — no live Cloud Build trigger is provisioned for this portfolio project.
 
 ---
 

@@ -1,0 +1,74 @@
+# CI/CD pipeline for the Olist Dataform project.
+#
+# Triggered on push to the default branch (trigger config: see
+# terraform/cicd.tf). Two stages:
+#   1. validate  — installs @dataform/cli and runs `dataform compile`.
+#      This is a pure syntax/dependency-graph check against the SQLX in
+#      definitions/ — no BigQuery credentials needed, fails fast on a
+#      bad ref() or config block.
+#   2. deploy    — asks the GCP-managed Dataform repository (provisioned
+#      in terraform/dataform.tf) to compile itself from the pushed
+#      commit and run a workflow invocation, i.e. actually execute the
+#      staging tables + incremental fact_order_items build in BigQuery,
+#      assertions included.
+#
+# Honesty note: this file is written to be correct against the
+# `gcloud dataform` command surface and has not been run through a real
+# Cloud Build trigger yet (no live trigger/connection provisioned for
+# this portfolio project — see the bootstrap note in terraform/cicd.tf).
+# Stage 1 (`dataform compile`) *has* been run locally against this
+# repo's actual definitions/ and passes:
+#   9 actions compiled (4 datasets, 5 assertions), 0 errors.
+
+steps:
+  # --- Stage 1: validate --------------------------------------------------
+  - id: install-dependencies
+    name: node:20
+    entrypoint: npm
+    args: ["ci"]
+
+  - id: validate-dataform-compilation
+    name: node:20
+    entrypoint: npx
+    args: ["dataform", "compile"]
+
+  # --- Stage 2: deploy / run ------------------------------------------------
+  - id: create-compilation-result
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        gcloud dataform repositories compilation-results create \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --repository="${_DATAFORM_REPOSITORY}" \
+          --git-commitish="$COMMIT_SHA" \
+          --format="value(name)" > /workspace/compilation_result.txt
+        cat /workspace/compilation_result.txt
+
+  - id: create-workflow-invocation
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        COMPILATION_RESULT="$(cat /workspace/compilation_result.txt)"
+        gcloud dataform repositories workflow-invocations create \
+          --project="$PROJECT_ID" \
+          --region="${_REGION}" \
+          --repository="${_DATAFORM_REPOSITORY}" \
+          --compilation-result="${COMPILATION_RESULT}"
+
+substitutions:
+  _REGION: europe-west1
+  _DATAFORM_REPOSITORY: olist-elt-pipeline
+
+options:
+  # Required because this trigger runs as a custom (non-default) service
+  # account — see terraform/iam.tf's cloud_build_pipeline SA.
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1200s

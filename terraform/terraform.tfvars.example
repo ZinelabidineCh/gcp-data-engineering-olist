@@ -1,0 +1,8 @@
+# Copy to terraform.tfvars and fill in your own values.
+# terraform.tfvars is gitignored on purpose — never commit a real project ID.
+
+project_id             = "your-gcp-project-id"
+region                 = "europe-west1"
+raw_data_bucket_name   = "your-gcp-project-id-olist-raw-data"
+github_repo_url        = "https://github.com/ZinelabidineCh/olist-elt-pipeline-gcp-looker.git"
+github_default_branch  = "workspace-v2"

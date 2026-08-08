@@ -8,11 +8,11 @@ SELECT
   ROUND(SUM(total_order_item_value), 2) AS total_revenue,
   COUNT(order_id) AS sales_volume
 FROM
-  `winged-app-488022-c5.olist_analytics.fact_order_items`
+  `your-gcp-project-id.olist_analytics.fact_order_items`
 WHERE
   order_status = 'delivered'
 GROUP BY
   1
 ORDER BY
   total_revenue DESC
-LIMIT 10
+LIMIT 10
